@@ -17,7 +17,12 @@ class OpenportJ2534 < Formula
   test do
     (testpath/"t.c").write <<~EOS
       #include <j2534/j2534.h>
-      int main(void) { unsigned long d; return PassThruOpen(0, &d) == 0 ? 1 : 0; }
+      int main(void) {
+        unsigned long d = 0;
+        long rc = PassThruOpen(0, &d);
+        if (rc == STATUS_NOERROR) return PassThruClose(d) == STATUS_NOERROR ? 0 : 1;
+        return rc == ERR_DEVICE_NOT_CONNECTED ? 0 : 1;
+      }
     EOS
     flags = shell_output("pkg-config --cflags --libs openport-j2534").split
     system ENV.cc, "t.c", *flags, "-o", "t"
